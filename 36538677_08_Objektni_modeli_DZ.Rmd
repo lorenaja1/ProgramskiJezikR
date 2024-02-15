@@ -1,0 +1,49 @@
+---
+title: "8 Objektni modeli - DOMAĆA ZADAĆA"
+author: "0036538677 Lorena Jakić" 
+date: "`r Sys.Date()`"
+output:
+  html_document: default
+---
+
+```{r setup_korisnik, include = F}
+library(sloop)
+knitr::opts_chunk$set(results = 'hold')
+```
+
+
+# Domaća zadaća
+
+1. Stvorite objekt klase `Kvadar` sa atributima `visina`, `sirina` i `dubina` i prilagođenim ispisom preko funkcije `print`. Demonstrirajte stvaranje i ispis objekta preko objektnog tipa S3 te objektnog tipa S4.
+
+```{r}
+
+#S3
+k1 <- list(visina = 4, sirina = 2, dubina = 4)
+class(k1) <- "Kvadar"
+
+myPrint <- function(x) {
+  n <- paste0("visina: ",x$visina, ", ", "sirina: ", x$sirina, ", dubina: ",x$dubina, "\n")
+  cat(n)
+}
+myPrint(k1)
+
+
+#S4
+setClass("Kvadar", representation(visina = "numeric", 
+                                  sirina = "numeric",
+                                  dubina = "numeric"))
+
+k2 <- new("Kvadar", visina = 5, sirina = 3, dubina = 7)
+
+setMethod("print", 
+  signature(x = "Kvadar"),
+  function(x) {
+    rez <- paste0("visina: ", x@visina, ", sirina: ", x@sirina, ", dubina: ", x@dubina, "\n")
+    cat(rez)
+  })
+
+print(k2)
+
+```
+

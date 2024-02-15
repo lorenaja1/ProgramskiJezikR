@@ -1,0 +1,52 @@
+---
+title: "Untitled"
+author: "0036538577"
+date: "2023-11-26"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+x <- 1
+resultA <- 1
+
+while(x <= 100) {
+  if (!(x %% 17)) resultA <- resultA * x
+  x = x + 1
+}
+resultA
+```
+
+```{r}
+x <- c(1:100)
+prod(x[!(x %% 17)])
+
+```
+```{r}
+set.seed(1234)
+l <- list(a = 1:100, b = 10:sample(100:200, 1), c = LETTERS)
+
+########################
+resultB <- 0
+for (i in l) {
+  resultB <- resultB + length(i)
+}
+###########################
+
+resultB
+```
+```{r}
+l
+
+resultB <- 0
+length(l[[1]]) + length(l[[2]]) + length(l[[3]])
+
+resultB <- lapply(l, length)
+resultB <- sum(unlist(resultB))
+
+
+```
+

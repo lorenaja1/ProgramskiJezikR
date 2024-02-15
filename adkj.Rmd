@@ -1,0 +1,217 @@
+---
+title: "projekt2"
+author: "0036538577"
+date: "2024-01-25"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(MASS)
+library(tidyverse)
+library(stringr)
+library(ggplot2)
+library(GGally)
+library(sn)
+library(gridExtra)
+library(Hmisc)
+library(broom)
+library(car)
+library(dplyr)
+library(corrplot)
+```
+
+```{r}
+data <- read_csv("chase.csv")
+glimpse(data)
+```
+```{r}
+ggplot(data, aes(x = factor(season), fill = factor(game_result))) +
+  geom_bar(position = "dodge", color = "black", alpha = 0.7) +
+  labs(title = "Broj pobjeda i poraza po sezoni", x = "Sezona", y = "Broj igara") +
+  scale_fill_manual(values = c("0" = "firebrick2", "1" = "chartreuse3"), labels = c("Poraz", "Pobjeda")) +
+  theme_minimal()
+ggsave("brojPiP.png")
+```
+
+```{r}
+
+# Stvaranje podskupa podataka s relevantnim informacijama
+age_data <- data %>%
+  select(season, p_1_age, p_2_age, p_3_age, p_4_age) %>%
+  gather(key = "player", value = "age", p_1_age:p_4_age)
+
+# Računanje prosječne dobi po sezoni
+average_age_by_season <- age_data %>%
+  group_by(season) %>%
+  summarise(avg_age = mean(age, na.rm = TRUE))
+
+# Graf prosječnih dobnih vrijednosti po sezoni
+ggplot(average_age_by_season, aes(x = season, y = avg_age, group = 1)) +
+  geom_line(color = "skyblue", size = 2) +
+  geom_point(color = "skyblue", size = 3) +
+  labs(title = "Prosječna dob igrača po sezoni", x = "Sezona", y = "Prosječna dob") +
+  theme_minimal()+theme(plot.title = element_text(hjust = 0.5))
+```
+
+```{r}
+data %>%
+  gather(key = "player_gender", value = "gender", ends_with("gender")) %>%
+  ggplot(aes(x = season, fill = gender)) +
+  geom_col(position = "dodge", color = "black", alpha = 0.7) +
+  labs(title = "Odnos brojnosti muškaraca i žena po sezonama",
+       x = "Sezona",
+       y = "Broj igrača") +
+  scale_fill_manual(values = c("female" = "chartreuse3", "male" = "skyblue"),
+                    labels = c("Žene", "Muškarci")) +
+  theme_minimal()
+```
+```{r}
+# Učitavanje potrebnih paketa
+library(dplyr)
+
+
+
+```
+```{r}
+# Učitavanje potrebnih paketa
+library(dplyr)
+data <- read_csv("chase.csv")
+
+# Dodavanje nove varijable koja označava je li igrač uzeo veću ponudu u sezoni 1
+podaci_sezona <- data %>%
+  mutate(veca_ponuda1 = ifelse(p_1_fast_round_sum < p_1_play_sum_chosen, 1, 0))
+podaci_sezona <- podaci_sezona %>%
+  mutate(veca_ponuda2 = ifelse(p_2_fast_round_sum < p_4_play_sum_chosen, 1, 0))
+podaci_sezona <- podaci_sezona %>%
+  mutate(veca_ponuda3 = ifelse(p_3_fast_round_sum < p_4_play_sum_chosen, 1, 0))
+podaci_sezona <- podaci_sezona %>%
+  mutate(veca_ponuda4 = ifelse(p_3_fast_round_sum < p_4_play_sum_chosen, 1, 0))
+podaci_sezona
+
+
+podat1 <- podaci_sezona[podaci_sezona$season == 1 & podaci_sezona$veca_ponuda1 == 1,]
+podat2 <- podaci_sezona[podaci_sezona$season == 1 & podaci_sezona$veca_ponuda2 == 1,]
+podat3 <- podaci_sezona[podaci_sezona$season == 1 & podaci_sezona$veca_ponuda3 == 1,]
+podat4 <- podaci_sezona[podaci_sezona$season == 1 & podaci_sezona$veca_ponuda4 == 1,]
+
+podat12 <- podaci_sezona[podaci_sezona$season == 2 & podaci_sezona$veca_ponuda1 == 1,]
+podat22 <- podaci_sezona[podaci_sezona$season == 2 & podaci_sezona$veca_ponuda2 == 1,]
+podat32 <- podaci_sezona[podaci_sezona$season == 2 & podaci_sezona$veca_ponuda3 == 1,]
+podat42 <- podaci_sezona[podaci_sezona$season == 2 & podaci_sezona$veca_ponuda4 == 1,]
+
+podat13 <- podaci_sezona[podaci_sezona$season == 3 & podaci_sezona$veca_ponuda1 == 1,]
+podat23 <- podaci_sezona[podaci_sezona$season == 3 & podaci_sezona$veca_ponuda2 == 1,]
+podat33 <- podaci_sezona[podaci_sezona$season == 3 & podaci_sezona$veca_ponuda3 == 1,]
+podat43 <- podaci_sezona[podaci_sezona$season == 3 & podaci_sezona$veca_ponuda4 == 1,]
+
+podat1 <- nrow(podat1) + nrow(podat2) + nrow(podat3) + nrow(podat4)
+podat2 <- nrow(podat12) + nrow(podat22) + nrow(podat32) + nrow(podat42)
+podat3 <- nrow(podat13) + nrow(podat23) + nrow(podat33) + nrow(podat43)
+
+igraci1 <- podaci_sezona[podaci_sezona$season == 1, ]
+igraci1
+igraci2 <- podaci_sezona[podaci_sezona$season == 2, ]
+igraci2
+igraci3 <- podaci_sezona[podaci_sezona$season == 3, ]
+igraci3
+
+igraci1 <- nrow(igraci1) * 4
+igraci2 <- nrow(igraci2) * 4
+igraci3 <- nrow(igraci3) * 4
+
+print("---")
+f <- podat1 / igraci1 * 100
+g <- podat2 / igraci2 * 100
+h <- podat3 / igraci3 * 100
+f
+g
+h
+print("---")
+igraci1
+igraci2
+igraci3
+
+podaci_grafikon <- data.frame(
+  season = rep(1:3, each = length(f)),
+  postotak = c(f, g, h)
+)
+
+# Stvaranje grafa
+# Stvaranje grafa s ograničenjem y-osi na maksimalnu vrijednost od 100
+ggplot(podaci_grafikon, aes(x = as.factor(season), y = postotak)) +
+  geom_bar(stat = "identity", position = "dodge", fill = "skyblue", color = "black") +
+  labs(title = "Postotak igrača koji često uzimaju veću ponudu po sezonama",
+       x = "Sezona",
+       y = "Postotak") +
+  scale_x_discrete(labels = c("1", "2", "3")) +
+  ylim(0, 100) +  # Postavljanje ograničenja na y-osi
+  theme_minimal()
+
+ggsave("postotak.")
+
+```
+
+```{r}
+ggsave("postotak.png")
+```
+
+```{r}
+# Učitavanje potrebnih biblioteka
+p1_data <- data[ , c("p_1_age", "p1_round_status")]
+p2_data <-data[ , c("p_2_age", "p_2_round_status")]
+p3_data <-data[ , c("p_3_age", "p_3_round_status")]
+p4_data <-data[ , c("p_4_age", "p_4_round_status")]
+
+colnames(p1_data) <- colnames(p2_data)
+colnames(p3_data) <- colnames(p2_data)
+colnames(p4_data) <- colnames(p2_data)
+df <- rbind(p1_data, p2_data, p3_data, p4_data)
+df
+
+min_age <- min(df$p_2_age)
+
+# Kreiranje ggplot grafikona
+ggplot(df, aes(x = cut(p_2_age, breaks = seq(min_age, max(p_2_age) + 5, by = 5), include.lowest = TRUE), fill = factor(p_2_round_status))) +
+  geom_bar(position = "dodge", color = "white") +
+  labs(title = "Raspon godina i postotak prolaska",
+       x = "Dobna skupina",
+       y = "Postotak", fill = "Prolazak") +
+  scale_y_continuous(labels = scales::percent) +  # Ispravak labele na y-osi
+  scale_fill_manual(values = c("0" = "firebrick2", "1" = "chartreuse3")) +
+  theme_minimal()
+
+ggsave("godineIprolazak.png")
+
+```
+
+```{r}
+p1_data <- data[ , c("p_1_gender", "p1_round_status")]
+p2_data <-data[ , c("p_2_gender", "p_2_round_status")]
+p3_data <-data[ , c("p_3_gender", "p_3_round_status")]
+p4_data <-data[ , c("p_4_gender", "p_4_round_status")]
+
+colnames(p1_data) <- colnames(p2_data)
+colnames(p3_data) <- colnames(p2_data)
+colnames(p4_data) <- colnames(p2_data)
+df <- rbind(p1_data, p2_data, p3_data, p4_data)
+df
+
+# Kreiranje ggplot grafikona
+ggplot(df, aes(x = p_2_gender, fill = factor(p_2_round_status))) +
+  geom_bar(position = "fill", color = "white") +
+  labs(title = "Postotak prolaska prema spolu",
+       x = "Spol",
+       y = "Postotak prolaska",
+       fill = "Status prolaska") +
+  scale_y_continuous(labels = scales::percent) +
+  scale_fill_manual(values = c("0" = "firebrick2", "1" = "chartreuse3")) +
+  theme_minimal()
+
+ggsave("spolProlazak.png")
+
+
+```
+
+
+

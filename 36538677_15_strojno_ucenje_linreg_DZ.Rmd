@@ -1,0 +1,59 @@
+---
+title: "15 strojno ucenje - linearna regresija - DOMAĆA ZADAĆA"
+author: "0036538677 Lorena Jakić"
+date: "`r Sys.Date()`"
+output:
+  html_document: default
+---
+
+```{r setup, include = F}
+library(MASS)
+library(tidyverse)
+library(stringr)
+library(ggplot2)
+library(GGally)
+library(sn)
+library(gridExtra)
+library(Hmisc)
+library(broom)
+library(car)
+library(corrplot)
+
+knitr::opts_chunk$set(results = 'hold')
+```
+
+## Domaća zadaća
+
+1. Učitajte skup podataka `iris` u globalno okruženje.
+
+Nacrtajte raspršeni graf koji prikazuje odnos između duljine latice (*Petal*) i duljine čašnog lista (*Sepal*). Korištenjem geometrije za crtanje dijagonalnih referentnih linija (funkcija `geom_abline`) pokušajte pogoditi nagib i presjecište za liniju koja "najbolje odgovara". Nemojte varati korištenjem funkcije `geom_smooth`!
+
+Primjer: `... + geom_abline(slope = 1, intercept = -3)`
+
+Istrenirajte model linearne regresije s duljinom latice kao prediktorom i duljinom čašnog lista kao ciljnom varijablom. Usporedite dobivene parametre s onima koje ste sami procijenili.
+
+```{r}
+data("iris")
+ggplot(iris, aes(x = Petal.Length, y = Sepal.Length)) + geom_point() + geom_abline(slope = 0.5, intercept = 4)
+
+lmMod <- lm(Sepal.Length ~ Petal.Length, iris)
+lmMod
+
+```
+
+
+2. Ponovno nacrtajte raspršeni graf iz 1), ali obojite točke na temelju vrste cvijeta. Objasnite zašto jedan regresijski model možda nije najbolji izbor za predviđanje duljine latice na temelju duljine čašnog lista.
+```{r}
+ggplot(iris, aes(x = Petal.Length, y = Sepal.Length, color = Species)) + geom_point()
+
+#zato sto duljina latice ovisi i o vrsti cvijeta
+```
+
+
+3. Istrenirajte model postupne linearne regresije gdje je duljina čašnog lista ciljna varijabla, a sve druge varijable potencijalni prediktori (uključujući i varijablu vrste). Usporedite sažetke modela između modela iz 2) i konačnog postupnog modela. Koji model preferirate i zašto?
+
+```{r}
+linMod <- lm(Sepal.Length ~ ., iris)
+linMod
+```
+

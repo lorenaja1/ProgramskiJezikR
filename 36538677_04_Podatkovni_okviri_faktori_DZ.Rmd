@@ -1,0 +1,82 @@
+---
+title: "4 Podatkovni okviri i faktori - DOMAĆA ZADAĆA"
+author: "0036538677 Lorena Jakić" 
+date: "`r Sys.Date()`"
+output:
+  html_document: default
+---
+
+
+```{r setup, include=FALSE}
+library(tidyverse)
+knitr::opts_chunk$set(echo = TRUE)
+knitr::opts_chunk$set(results = 'hold')
+```
+
+
+# Domaća zadaća
+
+
+1. U mapi zajedno sa ovom bilježnicom pronađite datoteku `mjestoNOHEADER.csv` koja predstavlja datoteku istovjetnu datoteci `mjesto.csv` osim sljedećih značajki:
+
+- nedostaju imena stupaca
+- korišten je razmak kao razdvojnik
+
+Pokušajte uz pomoć dokumentacije učitati podatke iz ove datoteke u varijablu `mjestoNH` koja će biti istovjetna varijabli `mjesto` korištenoj u lekciji.
+
+```{r}
+
+mjestoNH <- read.csv("mjestoNOHEADER.csv", header = FALSE, sep = " ")
+colnames(mjestoNH) <- c("pbr", "nazivMjesta", "prosjPlacaKn", "brojStanovnika", "prirez")
+mjestoNH
+
+```
+
+
+2. U mapi zajedno sa ovom bilježnicom pronađite datoteku `racun.csv` i učitajte ju u varijablu `racun`. Pripazite da nizovi znakova nisu automatski pretvoreni u faktore. Ispišite na zaslon:
+
+- broj redaka ove tablice
+- broj stupaca tablice
+- imena stupaca tablice
+
+```{r}
+racun <- read_csv("racun.csv")
+
+# broj redaka ove tablice
+nrow(racun)
+
+# broj stupaca tablice
+ncol(racun)
+
+# imena stupaca tablice
+names(racun)
+
+```
+
+
+3. Za tablicu `racun` napravite sljedeće:
+- faktorizirajte stupac `katArtikl`
+- ispišite šifru, naziv i cijenu svih artikala kategorije "slatkisi i grickalice" jeftinijih od 77 Kn
+- ispišite koliko proizvoda koje kategorije se nalazi u računu
+- dodajte stupac ukupno koji će sadržavati ukupnu cijenu pojedine stavke uračunavajući i cijenu i količinu
+- izračunajte ukupni iznos računa
+
+```{r}
+# faktorizirajte stupac `katArtikl`
+racun.f <- factor(racun$katArtikl)
+
+# ispišite šifru, naziv i cijenu svih artikala kategorije "slatkisi i grickalice" jeftinijih od 77 Kn
+racun[racun$cijena < 77 & racun$katArtikl == "slatkisi i grickalice", c("sifArtikl", "nazArtikl", "cijena")]
+
+# ispišite koliko proizvoda koje kategorije se nalazi u računu
+table(racun.f)
+
+# dodajte stupac ukupno koji će sadržavati ukupnu cijenu pojedine stavke uračunavajući i cijenu i količinu
+racun$ukupno <- racun$cijena * racun$kolicina
+
+# izračunajte ukupni iznos računa
+sum(racun$ukupno)
+
+```
+
+

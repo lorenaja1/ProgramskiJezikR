@@ -1,0 +1,86 @@
+---
+title: "3 Vektori, matrice i liste - DOMAĆA ZADAĆA"
+author: "0036538677 Lorena Jakić" 
+date: "`r Sys.Date()`"
+output:
+  html_document: default
+---
+
+```{r setup, include=FALSE}
+library(tidyverse)
+knitr::opts_chunk$set(echo = TRUE)
+knitr::opts_chunk$set(results = 'hold')
+```
+
+# Domaća zadaća
+
+1. Stvorite i ispišite na zaslon sljedeće vektore:
+
+```{r}
+# (11, 12, 13,..., 77), gdje je 77 = max(77,54)
+v1 <- c(11:77)
+v1
+
+# (0, 0, 0, 0, ... , 0)   (77 nula)
+v2 <- rep(0, 77)
+v2
+
+# (0, 0.1, 0.2, ...., 1.0)
+v3 <- seq(0, 1, 0.1)
+v3
+
+```
+
+
+2. Kolika je suma svih brojeva od 101 do 10 * 77, ako preskočimo sve brojeve djeljive sa 10? Koristite se funkcijom `sum`.
+
+```{r}
+
+x <- c(101:770)
+sum(x[x %% 10 != 0])
+
+```
+
+
+3. Stvorite matricu 3 x 3 sa brojevima izvođenjem sljedećih naredbi (funkciju `sample` ćemo pobliže upoznati u jednoj od sljedećih lekcija):
+
+```{r}
+# stvaramo matricu 3x3 nasumično odabranih elemenata iz skupa od 1 do 100
+#set.seed(XX)  # prije rješavanja otkomentirajte ovu naredbu i zamijenite XX prema naputku
+m <- matrix(c(sample(1:100, 9, T)), nrow = 3, ncol = 3, byrow = T)
+```
+
+```{r}
+# Izračunajte inverznu matricu uz pomoć funkcije `solve`. Provjerite da li umnožak originalne i inverzne matrice daje jediničnu matricu (za množenje matrica koristite se operatorom `%*%`).
+
+solve(m)
+m %*% solve(m)
+```
+
+
+4. Inicijalizirajte ponovo listu `svastara` korištenu u lekciji. Napravite sljedeće:
+
+```{r}
+svastara <- list(brojevi = c(1L, 2L, 3L),
+                 slova = c("A", "B"),
+                 c(T, F),
+                 imena = c("Ivo","Ana"))
+
+# ispišite klasu drugog elementa liste
+class(svastara[[2]])
+
+# ispišite element na trećem mjestu elementa liste naziva `slova`
+svastara$slova[3]
+
+# provjerite duljinu elementa naziva `imena` te na zadnje mjesto dodajte ime `"Pero"`
+nchar(svastara$imena)
+svastara$imena[3] <- "Pero"
+
+# provjerite da li se broj `4` nalazi u prvom elementu liste
+4 %in% svastara[[1]]
+
+# na zadnje mjesto liste dodajte novu listu sa tri vektora `a`, `b` i `c` koji svi sadrže elemente (1,2,3)
+svastara[[5]] <- list(a = c (1, 2, 3), b = c (1, 2, 3), c = c (1, 2, 3))
+
+```
+

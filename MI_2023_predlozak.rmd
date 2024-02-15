@@ -1,0 +1,110 @@
+---
+output:
+  html_document: default
+---
+
+```{r setup, include = F}
+knitr::opts_chunk$set(results = 'hold')
+# sve nužne pakete učitati ovdje!
+```
+
+******************
+
+## OSNOVE STATISTIČKOG PROGRAMIRANJA
+#### **Fakultet elektrotehnike i računarstva, Sveučilište u Zagrebu**
+#### 27/11/2023
+
+******************
+
+# **MEĐUISPIT -  PREDLOŽAK**  
+
+======================================================================================
+
+#### JMBAG: 0036538677        
+#### Ime i prezime: Lorena Jakić 
+#### e-mail: Lorena.Jakic@fer.hr    
+#### IP adresa:     
+
+
+======================================================================================
+
+#### OSNOVNE UPUTE
+
+U nastavku slijedi niz zadataka za završni ispit. Rješenja zadatka mogu uključivati **upisivanje programskog koda** ili **čistog teksta** te **izvršavanje programskog koda**. Molimo da se pridržavate sljedećih naputaka:
+
+- prije rješavanja stisnite gumb **Knit to HTML** kako bi provjerili ispravnost sučelja te dobili predložak ispita u preglednijem obliku u prozoru preglednika s desne strane
+- ukoliko nije drugačije navedeno, prostor za rješavanje zadataka sami stvarate kombinacijom tipaka **CTRL+ALT+I** ili odabirom opcija **Insert -> R**
+- pažljivo čitajte tekstove zadataka
+- tekst zadatka može sadržavati i programski kod kojeg morate izmijeniti i nadopuniti te izvršiti već prema uputama danim u tekstu zadatka i / ili komentarima postojećeg programskog koda
+- ukoliko je rješenje zadatka programski kod koji nešto ispisuje, budite sigurni da bilježnica uključuje i taj ispis
+- programski kod slobodno komentirajte
+- oznake `echo = F` i `message = F` ne mijenjajte; one služe kako konačni ispis ne bi imao nepotrebne statusne poruke
+
+Nakon ispunjavanja bilježnice odaberite opciju **Knit to HTML* i pohranite rezultat u HTML obliku u predviđeni repozitorij na *Moodle* stranicama predmeta. 
+
+Tijekom rješavanja bilježnice smijete se koristiti pomoćnim sredstvima kao što su podsjetnici, dokumentacija jezika R, bilježnice s predavanja, *Google* tražilica. **Izričito se zabranjuje razmjena informacije sa drugim polaznicima ispita bilo kojim vidom komunikacije, uključujući i elektroničku poštu, društvene mreže, chat programe ili korištenje zajedničkog dijeljenog repozitorija, kao i korištenje alata umjetne inteligencije.** 
+
+Pohranom HTML bilježnice pod Vašim korisničkim imenom i lozinkom garantirate da tijekom ove provjere znanje niste od drugoga primili niti pružili pomoć te da se niste koristili nedopuštenim sredstvima. Ove su radnje povreda Kodeksa ponašanja te mogu uzrokovati trajno isključenje s Fakulteta.
+
+
+======================================================================================
+
+## ZADACI
+
+******************
+
+**NAPOMENA** U zadacima nije dopušteno koristiti eksplicitne programske petlje!
+
+******************
+
+
+
+### 1. **(1 bod)**
+
+Stvorite sljedeći numerički vektor:
+
+- vektor `a`: (-1000, -990, -980, ...., -10, 0)
+
+Ispišite na zaslon **prvih 10 elemenata vektora `a`.
+
+### Rješenje
+
+```{r}
+a <- seq(-1000, 0, 10)
+head(a)
+
+```
+
+
+******************
+
+
+### 2. **(1 + 1 bod)**
+
+Podatkovni skup `deniro.csv` pohranjuje podatke o filmovima glumca Roberta de Nira. Učitajte ovaj podatkovni skup u varijablu `deniro`.
+
+```{r, echo = F, message=F}
+deniro <- read_csv("deniro.csv")
+deniro
+```
+
+Napišite jednu naredbu programskog koda čiji ispis odgovara na sljedeća pitanja:
+
+a) Koliko redaka ima ovaj podatkovni skup?
+
+### Rješenje
+
+```{r}
+nrow(deniro)
+
+```
+
+
+b) Koji su nazivi filmova ocijenjenih ocjenom manjom od 50?
+
+### Rješenje
+
+```{r}
+badDeniro <- deniro[deniro$Score < 50, "Title"]
+badDeniro
+```

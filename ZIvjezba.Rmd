@@ -1,0 +1,303 @@
+---
+output:
+  html_document: default
+---
+
+```{r setup, include = F}
+knitr::opts_chunk$set(results = 'hold')
+library(tidyverse)
+```
+
+******************
+
+## OSNOVE STATISTIČKOG PROGRAMIRANJA
+#### **Fakultet elektrotehnike i računarstva, Sveučilište u Zagrebu**
+#### 26/01/2023
+
+******************
+
+# **ZAVRŠNI ISPIT**  
+
+======================================================================================
+
+#### JMBAG:         
+#### Ime i prezime: 
+#### e-mail:       
+#### IP adresa:     
+
+
+======================================================================================
+
+#### OSNOVNE UPUTE
+
+U nastavku slijedi niz zadataka za završni ispit. Rješenja zadatka mogu uključivati **upisivanje programskog koda** ili **čistog teksta** te **izvršavanje programskog koda**. Molimo da se pridržavate sljedećih naputaka:
+
+- prije rješavanja stisnite gumb **Knit to HTML** kako bi provjerili ispravnost sučelja te dobili predložak ispita u preglednijem obliku u prozoru preglednika s desne strane
+- ukoliko nije drugačije navedeno, prostor za rješavanje zadataka sami stvarate kombinacijom tipaka **CTRL+ALT+I** ili odabirom opcija **Insert -> R**
+- pažljivo čitajte tekstove zadataka
+- tekst zadatka može sadržavati i programski kod kojeg morate izmijeniti i nadopuniti te izvršiti već prema uputama danim u tekstu zadatka i / ili komentarima postojećeg programskog koda
+- ukoliko je rješenje zadatka programski kod koji nešto ispisuje, budite sigurni da bilježnica uključuje i taj ispis
+- programski kod slobodno komentirajte
+
+
+Nakon ispunjavanja bilježnice odaberite opciju **Knit to HTML* i pohranite rezultat u HTML obliku u predviđeni repozitorij na *Moodle* stranicama predmeta. 
+
+Tijekom rješavanja bilježnice smijete se koristiti pomoćnim sredstvima kao što su podsjetnici, dokumentacija jezika R, bilježnice s predavanja, *Google* tražilica. **Ne smijete razmjenjivati informacije sa drugim polaznicima ispita bilo kojim vidom komunikacije, uključujući i elektroničku poštu, društvene mreže, chat programe ili korištenje zajedničkog dijeljenog repozitorija!**
+
+Pohranom HTML bilježnice pod Vašim korisničkim imenom i lozinkom garantirate da tijekom ove provjere znanje niste od drugoga primili niti pružili pomoć te da se niste koristili nedopuštenim sredstvima. Ove su radnje povreda Kodeksa ponašanja te mogu uzrokovati trajno isključenje s Fakulteta.
+
+Prije rješavanja zadataka postavite datoteku `music.csv` u mapu gdje se nalazi ova bilježnica i učitajte podatke iz nje uz pomoć sljedeće naredbe:
+
+```{r}
+rm(list = ls())    # brišemo postojeće varijable kako bi krenuli od nule
+# učitavanje podataka iz datoteke `music.csv`
+music <- read_csv("music.csv")
+
+# termini koje ćemo koristiti za neke od atributa
+# `duration` - trajanje
+# `artist.name` - naziv umjetnika
+# `release.name` - naziv albuma
+# `song.title` - naziv pjesme
+# `song.hotness` - popularnost pjesme
+
+# (opcionalno) head, glimpse, summary
+# rezultate eksploratorne analize NE UKLJUČUJETE U INAČICU ZA PREDAJU
+head(music)
+```
+
+Učitane podatke možete vidjeti u prozoru s gornje desne strane sučelja **RStudio**, tab *Environment**.
+
+======================================================================================
+
+## ZADACI
+
+******************
+
+**NAPOMENA** U zadacima nije dopušteno koristiti eksplicitne programske petlje!
+
+******************
+
+## 1. ZADATAK (8 bodova)
+
+Za podatke iz podatkovnog okvira ispišite sljedeće:
+
+**(2 boda)**
+
+a) Za prvih 10 pjesama čiji je naziv kraći od 8 znakova ispišite naziv umjetnika i naziv pjesme.
+
+**RJEŠENJE:**
+
+```{r}
+filter(music, nchar(song.title) < 8) %>% head(10) %>% select(artist.name, song.title) 
+
+
+```
+
+***
+
+**(2 boda)**
+b) Za sve pjesme čiji naziv sadrži niz slova "cool" ili "hot" (neovisno o veličini slova) a koje imaju poznatu godinu izlaska ispišite naziv umjetnika, naziv pjesme, godinu izdavanja i popularnost. Ispis poredajte po godini izdavanja uzlazno.
+
+**RJEŠENJE:**
+
+```{r}
+filter(music, str_detect(tolower(song.title), "cool|hot") & year != 0) %>% select(artist.name, song.title, year, song.hotness) %>% arrange(year)
+
+```
+
+***
+
+**(2 boda)**
+c) Za nasumičnih 10 pjesama iz žanra `"post-grunge"` ispišite naziv umjetnika, naziv albuma, naziv pjesme i trajanje u minutama i sekundama (npr. 193 = "3m 13s")
+
+
+**RJEŠENJE:**
+
+```{r}
+set.seed(1280)
+
+filter(music, genre == "post-grunge") %>% slice_sample(n = 10) %>% transmute(artist.name, release.name, song.title, durms = str_c(duration %/% 60, "m ") %>% str_c(duration - duration %/% 60 * 60) %>% str_c("s"))
+
+
+```
+
+***
+
+**(2 boda)**
+d) Ispišite prosječno trajanje i popularnost pjesama izdanih u '80-tima, za svaku godinu iz tog perioda. 
+
+
+**RJEŠENJE:**
+
+```{r}
+filter(music , year >= 1980 & year <= 1989) %>% group_by(year)  %>%
+  summarise(meanDuration = mean(duration, na.rm = T), meanPopularity = mean(song.hotness, na.rm =T))
+
+```
+
+
+          
+******************
+
+
+## 2. ZADATAK (6 bodova)
+
+Datoteke `graph1.png`, `graph2.png` i `graph3.png` sadrže tri vizualizacije podataka iz okvira `music` (ili nekog njegovog podskupa). Pokušajte rekonstruirati ove vizualicije.
+
+**(2 boda)**
+a) `graph1.png`
+
+**RJEŠENJE:**
+
+```{r}
+music2 <- music[music$genre == "hip hop",]
+ggplot(music2, aes(x = duration)) + geom_histogram(bins = 10, fill = "orange", color = "black", na.rm = T) + scale_x_continuous(name = "Duration of 'hip hop' songs", limits = c(0, 1000))
+    #+ theme(axis.text.x = element_text(angle = 45))
+
+
+```
+
+
+***
+
+**(2 boda)**
+b) `graph2.png`
+
+**RJEŠENJE:**
+
+```{r}
+df2 <- filter(music, year > 2000 & year <= 2010)
+df2$year = factor(df2$year)
+
+ggplot(df2, aes(x = year, y = song.hotness)) + geom_boxplot() + 
+  labs(x = "year of release", y = "Song hotness")
+
+```
+
+***
+
+
+
+**(2 boda)**
+c) `graph3.png`
+
+**RJEŠENJE:**
+
+```{r}
+ggplot(music, aes(x = duration, y = tempo)) + geom_point(alpha = 0.2, shape = 1, size = 2) + facet_wrap(~time_signature) + labs(title = "Duration vs tempo for various time signatures, 0.2 transperency")
+
+```
+
+
+
+********************
+
+## 3. ZADATAK (6 bodova)
+
+Rezultate ovog zadatka ispišite u obliku postotka zaokruženog na dvije decimale, npr. `36.25%`.
+
+
+**(2 boda)**
+a) Ako pretpostavimo da se težine mačaka ravnaju po normalnoj razdiobi sa sredinom od 5 kg i standardnom devijacijom 1.5 kg, koja je vjerojatnost da će nasumično odabrana mačka imati između 6 i 7 kg?
+
+
+**RJEŠENJE:**
+
+```{r}
+rez <- pnorm(7, mean = 5, sd = 1.5) - pnorm(6, mean = 5, sd = 1.5)
+rez <- round(rez, 4) * 100
+str_c(rez, "%")
+
+```
+
+**(4 boda)**
+b) Procijenite vjerojatnost da kod bacanja 5 kockica isti broj dobijete barem 3 puta. Procjena mora biti izvedena na temelju simulacije 10,000 eksperimenata.
+
+```{r}
+bacanje5kockica <- function() {
+  brojevi <- sample(1:6, 5, replace = T)
+  a <- table(brojevi) >= 3
+  sum(a) == 1
+}
+rez <- replicate(10000, bacanje5kockica()) %>% mean(.)
+str_c(rez * 100, "%")
+```
+
+
+
+
+
+### Rješenje
+
+```{r}
+set.seed(1232)
+
+```
+
+
+******************
+
+## 4. ZADATAK (5 bodova)
+
+Izvršite sljedeći odsječak koji rastavlja podatkovni okvir `music` na dva podokvira.
+
+
+```{r}
+set.seed(1234)
+
+train_ind <- sample(1:nrow(music), round(0.65 * nrow(music)))
+music.train <- music[train_ind, ]
+music.test <- music[-train_ind, ]
+
+```
+
+**(2 boda)**
+a)  Korištenjem skupa `music.train` istrenirajte model linearne regresije koji će probati pogoditi *popularnost pjesme* na osnovu trajanja pjesme, tempa i popularnosti umjetnika. Ispišite sažetak modela. Prema dobivenim rezultatima, koju varijablu smatrate najboljim, a koju najlošijim prediktorom popularnosti pjesme? 
+
+**RJEŠENJE:**
+
+```{r}
+head(music.train)
+linMod <- lm(song.hotness ~ duration + tempo + artist.hotness , music.train)
+summary(linMod)
+
+```
+
+*KOMENTAR REZULTATA:*
+
+
+
+
+******************************************************
+
+
+**(3 boda)**
+b)  Uz pomoć metode `predict` i linearnog modela iz a) zadatka stvorite predikcije korištenjem opservacija iz skupa `music.test` a potom izračunajte reziduale. Provjerite i komentirajte normalnost dobivenih reziduala. 
+
+**RJEŠENJE:**
+
+```{r}
+library(gridExtra)
+library(grid)
+library(ggplot2)
+library(lattice)
+library(broom)
+prediction <- predict(linMod, newdata = music.test) 
+summary(prediction)
+predictionDetail <- augment(linMod, newdata = music.test)
+summary(predictionDetail)
+g1 <- ggplot(predictionDetail, aes(.fitted, .resid)) + geom_point()
+g2 <- ggplot(predikcije, aes(x = .std.resid)) + geom_density()
+g3 <- ggplot(predikcije, aes(sample = .std.resid)) + geom_qq()
+grid.arrange(g1, g2, g3, ncol = 2)
+
+```
+
+*KOMENTAR REZULTATA:*
+
+
+
+
+
+
+

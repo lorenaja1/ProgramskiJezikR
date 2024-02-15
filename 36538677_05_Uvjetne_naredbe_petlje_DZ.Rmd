@@ -1,0 +1,70 @@
+---
+title: "5 Uvjetne naredbe i petlje - DOMAĆA ZADAĆA"
+author: "0036538677 Lorena Jakić" 
+date: "`r Sys.Date()`"
+output:
+  html_document: default
+---
+
+```{r setup, include=FALSE}
+library(tidyverse)
+knitr::opts_chunk$set(echo = TRUE)
+knitr::opts_chunk$set(results = 'hold')
+```
+
+# Domaća zadaća
+
+1. Stvorite podatkovni okvir mjesto uz pomoć sljedeće naredbe:
+
+```{r}
+mjesto <- data.frame( pbr = c(10000, 51000, 21000, 31000, 2000),
+         nazivMjesta = c("Zagreb", "Rijeka", "Split", "Osijek", "Dubrovnik"),
+         prirez = c(18, 15, 10, 13, 10))
+```
+
+
+Dodajte ovom okviru stupac `prirezOpis` koji će biti ordinalna faktorska varijabla sa razinama `"mali"`, `"srednji"` i `"visok"` ovisno o tome da li je postotak prireza strogo manji od 12, između 12 i 15 ili strogo veći od 15. Koristite se naredbom `ifelse`.
+
+```{r}
+mjesto$prirezOpis <- ifelse(mjesto$prirez < 12, "mali", ifelse(mjesto$prirez > 15, "visok", "srednji"))
+mjesto
+
+```
+
+
+2. Zamijenite petlje u sljedećem bloku ekvivalentnim vektoriziranim operacijama (za drugu petlju proučite dokumentaciju funkcije `sum`).
+
+```{r, eval = F}
+a <- numeric()
+i <- 1
+
+while (i <= max(36538677 %% 100, 50))  {
+  a <- c(a, i)
+  i <- i + 1
+}
+a
+
+suma <- 0
+
+for (i in a) {
+  if (i %% 2 == 0) suma <- suma + i*i
+}
+
+print(suma)
+
+```
+```{r}
+#prva petlja
+a <- numeric()
+a <- seq(1, max(36538677 %% 100, 50), 1)
+a
+
+#druga petlja
+suma <- 0
+suma <- sum(a[a%%2 == 0] ** 2)
+print(suma)
+
+```
+
+
+

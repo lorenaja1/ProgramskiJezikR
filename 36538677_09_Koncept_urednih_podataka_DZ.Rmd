@@ -1,0 +1,65 @@
+---
+title: "9 Koncept urednih podataka - DOMAĆA ZADAĆA"
+author: "0036538677 Lorena Jakić" 
+date: "`r Sys.Date()`"
+output:
+  html_document: default
+---
+
+
+```{r include=FALSE}
+library(magrittr)
+library(tidyr)
+library(readr)
+library(dplyr)
+knitr::opts_chunk$set(results = 'hold')
+```
+
+
+# Domaća zadaća
+1. Inicijalizirajte generator slučajnih brojeva uz pomoć naredbe `set.seed(0036538677)`. Potom uz pomoć jedne naredbe i `%>%` operatora izvedite sljedeće:
+
+- stvorite 10000 nasumičnih brojeva izvučenih iz normalne razdiobe za aritmetičkom sredinom 10000 i standardnom devijacijom 1000
+- zaokružite brojeve na prvi veći cijeli broj
+- izbacite duplikate iz skupa
+- poredajte skup po veličini
+- slučajnim odabirom iz skupa izvucite 100 elemenata
+- organizirajte tih 100 elemenata u matricu 10 x 10, složenu po retcima
+- izračunajte sume redaka matrice
+- ispišite prosjek suma redaka na zaslon. 
+
+```{r}
+set.seed(0036538677)
+
+rnorm(10000, 10000, 1000) %>% ceiling() %>% unique() %>% sort() %>% sample(100) %>% matrix(nrow = 10, ncol = 10, byrow = TRUE) %>% apply(1, sum) %>% mean() %>% print()
+
+```
+
+
+2. U datoteci `weather.csv` nalaze se podaci o izmjerenim vremenskim uvjetima od strane meteorološke stanice koja svaki sat vremena mjeri temperaturu, tlak, vlažnost i brzinu vjetra (podaci su preuzeti i prilagođeni iz podatkovnog skupa paketa `weatherData` dostupnog na CRAN-u). Izvedite sljedeće:
+
+- učitajte datoteku u podatkovni okvir i proučite učitane podatke (`names`, `str`, `summary`, `head`...)
+- odgovorite: da li se radi o urednim podacima? Zašto?
+- poduzmite odgovarajuće korake kako bi dobili podatkovni okvir koji odgovara principu urednih podataka
+- spremite "uređeni" u okvir u datoteku `weatherClean.csv`
+```{r}
+# učitajte datoteku u podatkovni okvir i proučite učitane podatke (`names`, `str`, `summary`, `head`...)
+vrijeme <- read_csv("weather.csv")
+head(vrijeme)
+```
+
+```{r}
+# odgovorite: da li se radi o urednim podacima? Zašto?
+print("Podaci nisu uredni. Vrijednosti stupca Measure trebale bi biti zasebi stupci, a njihove vrijednosti predstavljaju vrijednosti stupca Value.")
+
+# poduzmite odgovarajuće korake kako bi dobili podatkovni okvir koji odgovara principu urednih podataka
+vrijeme2 <- pivot_wider(vrijeme, names_from = Measure, values_from = Value)
+head(vrijeme2)
+
+# spremite "uređeni" u okvir u datoteku `weatherClean.csv`
+write.csv(vrijeme2, "weatherClean.csv")
+```
+
+
+
+

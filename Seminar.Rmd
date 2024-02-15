@@ -1,0 +1,601 @@
+---
+title: "Seminarski rad"
+author: ''
+date: "2024-01-24"
+output:
+  pdf_document: default
+  html_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(MASS)
+library(tidyverse)
+library(stringr)
+library(ggplot2)
+library(GGally)
+library(sn)
+library(gridExtra)
+library(Hmisc)
+library(broom)
+library(car)
+library(corrplot)
+```
+
+```{r}
+data <- read_csv("spotify_songs.csv")
+glimpse(data)
+head(data)
+spotify_data <- data
+```
+
+```{r}
+spotify_songs <- data
+top_artists <- spotify_songs %>%
+  group_by(track_artist) %>%
+  summarise(avg_popularity = mean(track_popularity)) %>%
+  arrange(desc(avg_popularity)) %>%
+  head(10)
+
+# Stvaranje pie dijagrama za top 10 izvođača
+pie_chart <- ggplot(top_artists, aes(x = "", y = avg_popularity, fill = track_artist)) +
+  geom_bar(stat = "identity", width = 1) +
+  coord_polar("y") +
+  labs(title = "Top 10 Izvođača prema Popularnosti") +
+  theme_void()
+
+# Prikazivanje grafa
+print(pie_chart)
+```
+```{r}
+library(plotly)
+# Pretvaranje stupca s datumom izdanja u tip podataka za datume
+spotify_songs$track_album_release_date <- as.Date(spotify_songs$track_album_release_date)
+
+# Filtriranje podataka za 2021. godinu
+songs_2021 <- subset(spotify_songs, format(track_album_release_date, "%Y") == "2019")
+songs_2021
+
+# Grupiranje po izvođaču i računanje broja pjesama
+df_artist <- songs_2021 %>%
+  group_by(track_artist) %>%
+  summarise(Total_Popularity = sum(track_popularity),
+            Average_Popularity = mean(track_popularity),
+            NumberOfSongs = n()) %>%
+  arrange(desc(Total_Popularity)) %>%
+  head(10)
+
+df_artist
+
+# Stvaranje pie dijagrama
+pie_chart <- ggplot(df_artist, aes(x = "", y = Total_Popularity, fill = track_artist)) +
+  geom_bar(stat = "identity", width = 1) +
+  coord_polar("y") +
+  labs(title = "Top 10 Izvođača prema Ukupnoj Popularnosti", fill = "Izvođač") +
+  theme_void()
+
+pie_chart
+ggsave("pjevaci.png")
+
+```
+
+
+```{r}
+df<-read_csv("spotify_songs.csv")
+df$playlist_genre <- as.factor(df$playlist_genre)
+
+# Stvaranje ggplot grafikona
+ggplot(df, aes(x = playlist_genre)) +
+  geom_bar(fill="skyblue") +
+  scale_fill_viridis_c() +
+  theme_minimal() +
+  labs(title = "Broj izvođača po žanrovima", x = "Žanr", y = "Broj izvođača") +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1),
+        plot.title = element_text(hjust = 0.5))
+
+ggsave("izvZanr.png")
+```
+```{r}
+nepopularne <- df %>% 
+  distinct(track_name, .keep_all = TRUE) %>% 
+  arrange(track_popularity) %>% 
+  head(10)
+
+ggplot(nepopularne, aes(x = reorder(str_to_upper(track_name), -track_popularity))) +
+  geom_point(aes(y = danceability, color = "Rasplesanost"), size = 3) +
+  geom_point(aes(y = energy, color = "Energija"), size = 3) +
+  geom_point(aes(y = valence, color = "Valencija"), size = 3) +
+  geom_line(aes(y = danceability, group = 1), color = "skyblue", linetype = "solid") +
+  geom_line(aes(y = energy, group = 1), color = "green", linetype = "solid") +
+  geom_line(aes(y = valence, group = 1), color = "yellow", linetype = "solid") +
+  labs(title = "Zanimljivosti najmanje popularnih pjesama",
+       x = "Naziv pjesme",
+       y = "Vrijednost",
+       color = "Karakteristika") +
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1,size=8),
+        plot.title = element_text(hjust = 0.5, size = 12)) +  # Prilagodba veličine slova ovdje
+  scale_color_manual(values = c("Rasplesanost" = "skyblue", "Energija" = "green", "Valencija" = "yellow")) +
+  labs(color = "Karakteristika") +
+  guides(color = guide_legend(title = "Karakteristika"))
+
+ggsave("nepopularne.png")
+```
+
+
+```{r}
+# Instalacija paketa ako već nisu instalirani
+install.packages(c("tm", "wordcloud"))
+
+# Učitavanje paketa
+library(tm)
+library(wordcloud)
+
+# Primjer podataka (zamijenite s vašim stvarnim podacima)
+texts <- c("Naziv prve pjesme", "Naziv druge pjesme", "Naziv treće pjesme", ...)
+
+# Stvaranje corpusa
+corpus <- Corpus(VectorSource(texts))
+
+# Čišćenje teksta
+corpus <- tm_map(corpus, content_transformer(tolower))
+corpus <- tm_map(corpus, removePunctuation)
+corpus <- tm_map(corpus, removeNumbers)
+corpus <- tm_map(corpus, removeWords, stopwords("english"))
+
+# Stvaranje word cloud-a
+wordcloud(words = corpus, scale = c(3, 0.5), max.words = 50, random.order = FALSE, colors = brewer.pal(8, "Dark2"))
+
+```
+
+
+```{r}
+# Standardizacija liveness i tempo
+spotify_data$liveness.scale <- scale(spotify_data$liveness)
+spotify_data$tempo.scale <- scale(spotify_data$tempo)
+
+# Vizualizacija u polar koordinatama
+ggplot(spotify_data, aes(x = tempo.scale,y = liveness.scale, fill = playlist_genre)) +
+  geom_bar(stat = 'count', position = 'identity') +
+  coord_polar(theta = 'x') +
+  theme_dark() +
+  theme(legend.position = 'top')
+
+```
+```{r}
+radar_chart_all <- function() {
+  radar_data_v1 <- spotify_data %>%
+    select(danceability, energy, loudness, speechiness, valence, instrumentalness, acousticness)
+  radar_data_v2 <- apply(radar_data_v1, 2, function(x) (x - min(x)) / diff(range(x)))
+  radar_data_v3 <- apply(radar_data_v2, 2, mean)
+  radar_data_v4 <- rbind(rep(1, 6), rep(0, 6), radar_data_v3)
+  return(radarchart(as.data.frame(radar_data_v4), title = "Sve pjesme"))
+}
+
+# Prikazivanje radar charta za sve pjesme
+Chart_all <- radar_chart_all()
+Chart_all
+ggsave("svePjesme.png")
+```
+```{r}
+library(ggplot2)
+df <- data
+
+sorted_df = df.sort_values('popularity', ascending = False).head(100)
+
+# Podaci
+labels <- colnames(sorted_df_1)
+features <- colMeans(sorted_df_1)
+features_all <- colMeans(sorted_two_df)
+
+# Kutovi
+angles <- seq(0, 2*pi, length.out = length(labels))
+
+# Kreiranje podataka za grafikon
+data_popular <- data.frame(
+  angle = rep(angles, each = 2),
+  value = c(features, features[1]),
+  variable = rep(labels, each = 2)
+)
+
+data_all <- data.frame(
+  angle = rep(angles, each = 2),
+  value = c(features_all, features_all[1]),
+  variable = rep(labels, each = 2)
+)
+
+# Grafikon
+polar_plot <- ggplot() +
+  geom_polygon(data = data_popular, aes(x = angle, y = value, group = variable, fill = "Popular"), alpha = 0.25) +
+  geom_line(data = data_popular, aes(x = angle, y = value, group = variable, color = "Popular"), size = 2) +
+  geom_polygon(data = data_all, aes(x = angle, y = value, group = variable, fill = "All the Dataset"), alpha = 0.25) +
+  geom_line(data = data_all, aes(x = angle, y = value, group = variable, color = "All the Dataset"), size = 2) +
+  scale_fill_manual(values = c("Popular" = "blue", "All the Dataset" = "orange")) +
+  scale_color_manual(values = c("Popular" = "blue", "All the Dataset" = "orange")) +
+  theme_minimal() +
+  theme(axis.text.x = element_blank(),
+        axis.title.x = element_blank(),
+        axis.text.y = element_blank(),
+        axis.title.y = element_blank(),
+        legend.position="bottom",
+        legend.title = element_text(size=15),
+        legend.text = element_text(size=12)) +
+  ggtitle("Mean Values")
+
+# Prikaz grafikona
+print(polar_plot)
+
+```
+
+
+```{r}
+library(reshape2)
+selected_features <- c('danceability', 'energy', 'loudness', 'speechiness', 'acousticness', 'instrumentalness', 'liveness', 'valence', 'tempo')
+
+tracks_df <- data
+# Izračunajte korelacijsku matricu
+corr_matrix <- cor(tracks_df[selected_features])
+
+
+# Vizualizirajte korelacijsku matricu pomoću heatmap-a
+ggplot(data = melt(corr_matrix), aes(Var1, Var2, fill = value)) +
+  geom_tile(color = "white") +
+  scale_fill_gradient2(low = "blue", high = "red", mid = "white", midpoint = 0, limit = c(-1,1), space = "Lab", name="Correlation") +
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 45, vjust = 1, size = 10, hjust = 1)) +
+  coord_fixed()
+```
+```{r}
+library(fmsb)
+radar_chart <- function(arg){
+spotify_data_filtered <- spotify_data %>% filter(playlist_genre == arg)
+radar_data_v1 <- spotify_data_filtered %>%
+  select(danceability,energy,loudness,speechiness,valence,instrumentalness,acousticness)
+radar_data_v2 <- apply(radar_data_v1,2,function(x){(x - min(x)) / diff(range(x))})
+radar_data_v3 <- apply(radar_data_v2,2,mean)
+radar_data_v4 <- rbind(rep(1,6) , rep(0,6) , radar_data_v3)
+return(radarchart(as.data.frame(radar_data_v4),title = arg))
+}
+
+par(mfrow = c(2, 3))
+Chart_pop <- radar_chart("pop")
+Chart_rb <- radar_chart("r&b")
+Chart_edm <- radar_chart("edm")
+Chart_latin <- radar_chart("latin")
+Chart_rap <- radar_chart("rap")
+Chart_rock <- radar_chart("rock")
+```
+
+
+```{r}
+spotify_data <- data
+spotify_data$liveness.scale <- scale(spotify_data$liveness)
+spotify_data$tempo.scale <- scale(spotify_data$tempo)
+
+# Prikazivanje polarne distribucije
+ggplot(spotify_data, aes(x = tempo.scale, fill = playlist_genre)) +
+  geom_bar(stat = 'count', position = 'identity', bins = 30) +
+  coord_polar(theta = "x") +
+  theme_dark() +
+  theme(legend.position = "top")
+```
+
+
+```{r}
+plot <- ggplot(data, aes(x = danceability, y = energy, color = playlist_genre)) +
+  geom_point(size = 3, alpha = 0.7) +
+  labs(title = "Odnos između Danceability i Energičnosti po Žanrovima",
+       x = "Danceability",
+       y = "Energičnost",
+       color = "Žanr") +
+  theme_minimal()
+
+# Prikazivanje grafa
+print(plot)
+```
+
+
+```{r}
+plot <- ggplot(data, aes(x = danceability, y = energy, color = playlist_genre)) +
+  geom_point(size = 3, alpha = 0.7) +
+  labs(title = "Odnos između Danceability i Energičnosti po Žanrovima",
+       x = "Danceability",
+       y = "Energičnost",
+       color = "Žanr") +
+  theme_minimal()
+
+# Prikazivanje grafa
+print(plot)
+```
+
+```{r}
+plot <- ggplot(data, aes(x = danceability, y = energy, color = playlist_genre)) +
+  geom_point(size = 3, alpha = 0.5) +  # Podesite alpha prema potrebi
+  labs(title = "Odnos između Danceability i Energičnosti po Žanrovima",
+       x = "Danceability",
+       y = "Energičnost",
+       color = "Žanr") +
+  theme_minimal()
+plot
+```
+```{r}
+plot <- ggplot(data, aes(x = track_popularity)) +
+  geom_histogram(binwidth = 5, fill = "darkseagreen", color = "black", alpha = 0.7) +
+  labs(title = "Raspodjela Popularnosti Pjesama",
+       x = "Popularnost",
+       y = "Broj Pjesama") +
+  theme_minimal()
+
+# Prikazivanje grafa
+print(plot)
+ggsave("popularnost.png")
+```
+```{r}
+library(ggplot2)
+
+# Pretvaranje trajanja iz milisekundi u minute i zaokruživanje na najbližu minutu
+data$duration_minutes <- round(data$duration_ms / 60000)
+
+# Stvaranje ggplot grafa za broj pjesama prema zaokruženom trajanju
+ggplot(data, aes(x = duration_minutes)) +
+  geom_bar(fill = "skyblue", color = "black") +
+  labs(
+    title = "Broj Pjesama prema Trajanju",
+    x = "Trajanje (minute)",
+    y = "Broj Pjesama"
+  ) +
+  scale_x_continuous(breaks = seq(0, max(data$duration_minutes), by = 1)) +
+  theme_minimal()
+
+ggsave("trajanje.png")
+
+```
+
+
+```{r}
+# Prvo, grupirajte podatke po izvođaču i izračunajte broj pjesama za svakog izvođača
+top_artists <- data %>%
+  group_by(track_artist) %>%
+  summarise(song_count = n()) %>%
+  arrange(desc(song_count)) %>%
+  head(10)
+
+# Stvaranje bar grafikona s ggplot
+plot <- ggplot(top_artists, aes(x = reorder(track_artist, -song_count), y = song_count)) +
+  geom_bar(stat = "identity", fill = "orange", color = "black") +
+  labs(title = "Top 10 Izvođača s Najviše Pjesama",
+       x = "Izvođač",
+       y = "Broj Pjesama") +
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))  # Rotiranje oznaka x-osi radi bolje čitljivosti
+
+# Prikazivanje grafa
+print(plot)
+```
+
+```{r}
+# Izdvajanje 10 najpopularnijih pjesama
+unique_top_10_tracks <- df %>% 
+  distinct(track_name, .keep_all = TRUE) %>% 
+  arrange(desc(track_popularity)) %>% 
+  head(10)
+
+# Stvaranje grafa za prosjek karakteristika s legendom i povezanim linijama
+ggplot(unique_top_10_tracks, aes(x = reorder(str_to_upper(track_name), -track_popularity))) +
+  geom_point(aes(y = danceability, color = "Danceability"), size = 3) +
+  geom_point(aes(y = energy, color = "Energy"), size = 3) +
+  geom_point(aes(y = valence, color = "Valence"), size = 3) +
+  geom_line(aes(y = danceability, group = 1), color = "skyblue", linetype = "solid") +
+  geom_line(aes(y = energy, group = 1), color = "green", linetype = "solid") +
+  geom_line(aes(y = valence, group = 1), color = "yellow", linetype = "solid") +
+  labs(title = "Zanimljivosti najpopularnijh pjesama",
+       x = "Naziv pjesme",
+       y = "Vrijednost",
+       color = "Karakteristika") +
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
+  scale_color_manual(values = c("Danceability" = "skyblue", "Energy" = "green", "Valence" = "yellow")) +
+  labs(color = "Karakteristika") +
+  guides(color = guide_legend(title = "Karakteristika"))
+ggsave("zanimljivosti.png")
+```
+
+
+```{r}
+top_songs <- data %>%
+  arrange(desc(track_popularity)) %>%
+  mutate(rank = row_number()) %>%
+  head(10)
+
+# Stvaranje bar grafikona s ggplot
+plot <- ggplot(top_songs, aes(x = reorder(track_name, -track_popularity), y = track_popularity, fill = as.factor(rank))) +
+  geom_bar(stat = "identity", color = "black") +
+  labs(title = "Top 10 Pjesama s Najvišom Popularnosti",
+       x = "Pjesma",
+       y = "Popularnost") +
+  scale_fill_manual(values = rainbow(nrow(top_songs))) +  # Možete koristiti drugu paletu boja
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))  # Rotiranje oznaka x-osi radi bolje čitljivosti
+
+# Prikazivanje grafa
+print(plot)
+```
+
+```{r}
+average_popularity <- data %>%
+  group_by(playlist_genre) %>%
+  summarise(avg_popularity = mean(track_popularity))
+
+# Stvaranje bar grafikona s ggplot
+plot <- ggplot(average_popularity, aes(x = reorder(playlist_genre, -avg_popularity), y = avg_popularity)) +
+  geom_bar(stat = "identity", fill = "lightgreen", color = "black") +
+  labs(title = "Prosječna Popularnost po Žanrovima",
+       x = "Žanr",
+       y = "Prosječna Popularnost") +
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))  # Rotiranje oznaka x-osi radi bolje čitljivosti
+
+# Prikazivanje grafa
+print(plot)
+```
+
+
+```{r}
+plot <- ggplot(data, aes(x = reorder(playlist_genre, tempo), y = tempo)) +
+  geom_boxplot(fill = "lightcoral", color = "black") +
+  labs(title = "Raspodjela Brzine Pjesama prema Žanru",
+       x = "Žanr",
+       y = "Tempo") +
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))  # Rotiranje oznaka x-osi radi bolje čitljivosti
+
+# Prikazivanje grafa
+print(plot)
+```
+
+```{r}
+plot <- ggplot(data, aes(x = energy, y = danceability, color = playlist_genre)) +
+  geom_point(alpha = 0.7) +
+  scale_color_brewer(palette = "Set1") +  # Možete odabrati drugu paletu boja
+  labs(title = "Odnos između Energičnosti i Plesnosti Pjesama",
+       x = "Energičnost",
+       y = "Plesnost",
+       color = "Žanr") +
+  theme_minimal()
+
+# Prikazivanje grafa
+print(plot)
+
+```
+```{r}
+plot <- ggplot(data, aes(x = duration_ms, y = track_popularity)) +
+  geom_point(alpha = 0.7) +
+  labs(title = "Odnos između Trajanja i Popularnosti Pjesama",
+       x = "Trajanje (ms)",
+       y = "Popularnost") +
+  theme_minimal()
+
+# Prikazivanje grafa
+print(plot)
+#popularnije pjesme srednje duzine, los graf jer su i najgore po sredini
+```
+
+```{r}
+songs_count <- data %>%
+  group_by(track_name) %>%
+  summarise(playlist_count = n())
+
+# Sortiranje pjesama prema broju pojavljivanja
+top_songs <- songs_count %>%
+  arrange(desc(playlist_count)) %>%
+  head(10)  # Prikazivanje samo top 10 pjesama radi bolje čitljivosti
+
+# Stvaranje bar grafikona s ggplot
+plot <- ggplot(top_songs, aes(x = reorder(track_name, -playlist_count), y = playlist_count)) +
+  geom_bar(stat = "identity", fill = "skyblue", color = "black") +
+  labs(title = "Top Pjesme prema Broju Playlista",
+       x = "Pjesma",
+       y = "Broj Playlista") +
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))  # Rotiranje oznaka x-osi radi bolje čitljivosti
+
+# Prikazivanje grafa
+print(plot)
+```
+```{r}
+plot <- ggplot(data, aes(x = reorder(playlist_genre, -track_popularity), y = track_popularity)) +
+  geom_bar(stat = "identity", fill = "skyblue", color = "black") +
+  labs(title = "Prosječna Popularnost za Svaki Žanr",
+       x = "Žanr",
+       y = "Prosječna Popularnost") +
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))  # Rotiranje oznaka x-osi radi bolje čitljivosti
+
+# Prikazivanje grafa
+print(plot)
+```
+
+```{r}
+plot <- ggplot(data, aes(x = danceability, y = tempo)) +
+  geom_point(size = 3, alpha = 0.7) +
+  labs(title = "Odnos između Danceability i Tempa po Žanrovima",
+       x = "Danceability",
+       y = "Tempo") +
+  facet_wrap(~playlist_genre, scales = "free") +  # Faceting po žanrovima
+  theme_minimal()
+
+# Prikazivanje grafa
+print(plot)
+```
+
+```{r}
+plot <- ggplot(data, aes(x = playlist_genre, y = tempo, fill = playlist_genre)) +
+  geom_violin(trim = FALSE) +
+  labs(title = "Raspodjela Brzine Pjesama prema Žanru",
+       x = "Žanr",
+       y = "Tempo") +
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))  # Rotiranje oznaka x-osi radi bolje čitljivosti
+
+# Prikazivanje grafa
+print(plot)
+```
+```{r}
+# Stvaranje box plot-a s ggplot
+plot <- ggplot(data, aes(x = playlist_genre, y = track_popularity)) +
+  geom_boxplot(fill = "darkcyan", color = "black") +
+  labs(title = "Raspodjela Popularnosti Pjesama prema Žanrovima",
+       x = "Žanr",
+       y = "Popularnost") +
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))  # Rotiranje oznaka x-osi radi bolje čitljivosti
+
+# Prikazivanje grafa
+print(plot) #edm najamnje popularan
+ggsave("zanrPopularnost.png")
+```
+
+
+```{r}
+spotify_songs <-  data
+plot <- ggplot(spotify_songs, aes(x = energy, y = loudness)) +
+  geom_point(color = "deeppink2", alpha = 0.7) +
+  labs(
+    title = "Ovisnost između Energy i Loudness pjesama",
+    x = "Energy",
+    y = "Loudness"
+  ) +
+  theme_minimal()
+
+# Prikazivanje grafa
+print(plot)
+ggsave("energyloudness.png")
+```
+
+```{r}
+data$track_album_release_date <- as.Date(data$track_album_release_date)
+
+# Izdvajanje godine iz datuma
+data$year <- format(data$track_album_release_date, "%Y")
+
+# Računanje prosječne popularnosti za svaki žanr i godinu
+average_popularity <- data %>%
+  group_by(playlist_genre, year) %>%
+  summarise(avg_popularity = mean(track_popularity), .groups = 'drop')
+
+
+# Stvaranje linijskog grafikona s ggplot i facet_wrap
+plot <- ggplot(cleaned_data, aes(x = year, y = avg_popularity, color = playlist_genre, group = playlist_genre)) +
+  geom_line() +
+  labs(title = "Promjene Popularnosti Pjesama kroz Godine za Svaki Žanr",
+       x = "Godina",
+       y = "Prosječna Popularnost") +
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1)) +  # Rotiranje oznaka x-osi radi bolje čitljivosti
+  facet_wrap(~playlist_genre, scales = "free_y", ncol = 3) +  # Facet_wrap po žanrovima, slobodne osi y, 3 stupca
+  scale_x_continuous(breaks = seq(min(cleaned_data$year), max(cleaned_data$year), by = 20))  # Označavanje svake 20. godine
+
+# Prikazivanje grafa
+print(plot)
+```
+
